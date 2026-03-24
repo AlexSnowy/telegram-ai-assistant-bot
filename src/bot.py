@@ -62,16 +62,21 @@ class AssistantBot:
 
     def _initialize_ai_client(self):
         """Инициализация AI клиента с приоритетом: Groq > Gemini > OpenAI"""
+        logger.info("=== Инициализация AI клиента ===")
+        logger.info(f"GROQ_API_KEY: {'✅ задан' if Config.GROQ_API_KEY and Config.GROQ_API_KEY != 'gsk_your_key_here' else '❌ не задан'}")
+        logger.info(f"GOOGLE_API_KEY: {'✅ задан' if Config.GOOGLE_API_KEY else '❌ не задан'}")
+        logger.info(f"OPENAI_API_KEY: {'✅ задан' if Config.OPENAI_API_KEY else '❌ не задан'}")
+        
         # Try Groq first (free, fast)
         if Config.GROQ_API_KEY and Config.GROQ_API_KEY != 'gsk_your_key_here':
             try:
                 logger.info("Попытка инициализации Groq клиента...")
                 from .groq_client import GroqClient
                 client = GroqClient(Config.GROQ_API_KEY)
-                logger.info(f"✓ Используется Groq с моделью: {Config.GROQ_MODEL}")
+                logger.info(f"✅ Используется Groq с моделью: {Config.GROQ_MODEL}")
                 return client
             except Exception as e:
-                logger.warning(f"Groq клиент не удалось инициализировать: {e}")
+                logger.error(f"❌ Groq клиент не удалось инициализировать: {e}", exc_info=True)
         
         # Try Gemini next
         if Config.GOOGLE_API_KEY:
@@ -79,10 +84,10 @@ class AssistantBot:
                 logger.info("Попытка инициализации Gemini клиента...")
                 from .gemini_client import GeminiClient
                 client = GeminiClient(Config.GOOGLE_API_KEY)
-                logger.info(f"✓ Используется Gemini с моделью: {Config.GEMINI_MODEL}")
+                logger.info(f"✅ Используется Gemini с моделью: {Config.GEMINI_MODEL}")
                 return client
             except Exception as e:
-                logger.warning(f"Gemini клиент не удалось инициализировать: {e}")
+                logger.error(f"❌ Gemini клиент не удалось инициализировать: {e}", exc_info=True)
         
         # Try OpenAI as last resort
         if Config.OPENAI_API_KEY:
@@ -90,11 +95,12 @@ class AssistantBot:
                 logger.info("Попытка инициализации OpenAI клиента...")
                 from .openai_client import OpenAIClient
                 client = OpenAIClient(Config.OPENAI_API_KEY)
-                logger.info(f"✓ Используется OpenAI с моделью: {Config.OPENAI_MODEL}")
+                logger.info(f"✅ Используется OpenAI с моделью: {Config.OPENAI_MODEL}")
                 return client
             except Exception as e:
-                logger.warning(f"OpenAI клиент не удалось инициализировать: {e}")
+                logger.error(f"❌ OpenAI клиент не удалось инициализировать: {e}", exc_info=True)
         
+        logger.error("❌ Не удалось инициализировать ни один AI клиент!")
         raise ValueError("Не удалось инициализировать ни один AI клиент. Проверьте API ключи.")
 
     def _register_handlers(self):
@@ -382,14 +388,19 @@ class AssistantBot:
 
     async def handle_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Обработка текстовых сообщений"""
+        start_time = datetime.now()
         user_id = get_user_identifier(update)
         user_message = format_user_message(update.message.text)
+        
+        logger.info(f"[{user_id}] Получено сообщение: {user_message[:100]}...")
 
         # Обработка кнопок меню
         if self.user_manager.is_registered(user_id):
             language = self.user_manager.get_language(user_id)
+            logger.debug(f"[{user_id}] Пользователь зарегистрирован, язык: {language}")
         else:
             language = 'uz'
+            logger.debug(f"[{user_id}] Пользователь не зарегистрирован, язык по умолчанию: uz")
 
         button_handlers = {
             'uz': {
@@ -412,46 +423,73 @@ class AssistantBot:
         # Проверяем, не является ли сообщение нажатием кнопки меню
         handler = button_handlers.get(language, button_handlers['uz']).get(user_message)
         if handler:
+            logger.info(f"[{user_id}] Обнаружена кнопка меню: {user_message}")
             await handler(update, context)
+            elapsed = (datetime.now() - start_time).total_seconds()
+            logger.info(f"[{user_id}] Обработка кнопки меню завершена за {elapsed:.2f}с")
             return
 
         if not self.user_manager.is_registered(user_id):
+            logger.warning(f"[{user_id}] Пользователь не зарегистрирован, отправка сообщения о регистрации")
             await update.message.reply_text(self._get_localized_text(update, 'not_registered'))
+            elapsed = (datetime.now() - start_time).total_seconds()
+            logger.info(f"[{user_id}] Обработка завершена (не зарегистрирован) за {elapsed:.2f}с")
             return
 
         # Проверяем, относится ли сообщение к теме закупок из Китая
-        if not self._is_topic_relevant(user_message):
+        logger.debug(f"[{user_id}] Проверка релевантности темы...")
+        is_relevant = self._is_topic_relevant(user_message)
+        logger.debug(f"[{user_id}] Результат проверки релевантности: {is_relevant}")
+        
+        if not is_relevant:
+            logger.info(f"[{user_id}] Тема нерелевантна, отправка сообщения о выходе за тему")
             off_topic_messages = {
                 'uz': "Kechirasiz, men faqat Xitoydan xarid qilish bilan bog'liq masalalarda yordam bera olaman. Sizning savolingiz bu mavzuga tegishli emas. Agar Xitoy bilan savdo haqida savolingiz bo'lsa, menga murojaat qiling!",
                 'ru': "Извините, я могу помогать только по вопросам закупок из Китая. Ваш вопрос не относится к этой теме. Если у вас есть вопросы о торговле с Китаем, обращайтесь!",
                 'en': "Sorry, I can only assist with questions related to procurement from China. Your question is not related to this topic. If you have questions about trade with China, feel free to ask!"
             }
             await update.message.reply_text(off_topic_messages.get(language, off_topic_messages['uz']))
+            elapsed = (datetime.now() - start_time).total_seconds()
+            logger.info(f"[{user_id}] Обработка завершена (нерелевантная тема) за {elapsed:.2f}с")
             return
 
         # Показываем статус "печатает"
+        logger.debug(f"[{user_id}] Отправка статуса 'печатает'...")
         await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
 
         try:
+            logger.info(f"[{user_id}] Начало генерации ответа AI...")
+            
             # Получаем контекст из базы знаний
             knowledge_context = self.knowledge_manager.get_context_for_query(user_message)
+            knowledge_len = len(knowledge_context) if knowledge_context else 0
+            logger.debug(f"[{user_id}] Получен контекст из базы знаний ({knowledge_len} символов)")
 
             # Ищем подходящий промт
             prompt_text = None
             prompts = self.prompt_manager.get_all_prompts()
+            logger.debug(f"[{user_id}] Доступно промтов: {len(prompts)}")
+            
             for p in prompts:
                 if p['name'].lower() in user_message.lower() or len(prompts) == 1:
                     prompt_text = self.prompt_manager.get_prompt(p['name'])
+                    logger.debug(f"[{user_id}] Используется промт: {p['name']}")
                     break
 
             # Формируем системный промт
             system_prompt = Config.SYSTEM_PROMPTS.get(language, Config.SYSTEM_PROMPTS['uz'])
+            system_prompt_len = len(system_prompt) if system_prompt else 0
+            logger.debug(f"[{user_id}] Системный промт загружен ({system_prompt_len} символов)")
 
             # Получаем историю
             history = context.user_data.get('chat_history', [])
+            history_len = len(history) if history else 0
+            logger.debug(f"[{user_id}] История чата: {history_len} сообщений")
 
             # Генерируем ответ через AI клиента (Groq/Gemini/OpenAI)
+            ai_start = datetime.now()
             if prompt_text:
+                logger.info(f"[{user_id}] Генерация ответа с промтом...")
                 response = self.ai_client.generate_response_with_prompt_template(
                     user_query=user_message,
                     prompt_template=prompt_text,
@@ -459,6 +497,7 @@ class AssistantBot:
                     language=language
                 )
             else:
+                logger.info(f"[{user_id}] Генерация ответа с контекстом...")
                 response = self.ai_client.chat_with_context(
                     user_message,
                     system_prompt,
@@ -466,32 +505,48 @@ class AssistantBot:
                     history[-5:] if history else None,
                     language
                 )
+            
+            ai_elapsed = (datetime.now() - ai_start).total_seconds()
+            response_len = len(response) if response else 0
+            logger.info(f"[{user_id}] Ответ сгенерирован за {ai_elapsed:.2f}с ({response_len} символов)")
 
             # Сохраняем в историю
             if 'chat_history' not in context.user_data:
                 context.user_data['chat_history'] = []
+                logger.debug(f"[{user_id}] Создана новая история чата")
 
             context.user_data['chat_history'].append({'role': 'user', 'content': user_message})
             context.user_data['chat_history'].append({'role': 'assistant', 'content': response})
 
             if len(context.user_data['chat_history']) > 20:
                 context.user_data['chat_history'] = context.user_data['chat_history'][-20:]
+                logger.debug(f"[{user_id}] История обрезана до 20 сообщений")
 
             # Отправляем ответ с меню
+            logger.info(f"[{user_id}] Отправка ответа пользователю...")
             await self._send_message_with_menu(update.effective_chat.id, response, language)
+            
+            elapsed = (datetime.now() - start_time).total_seconds()
+            logger.info(f"[{user_id}] Обработка сообщения завершена за {elapsed:.2f}с")
 
         except Exception as e:
-            logger.error(f"Ошибка обработки сообщения: {e}", exc_info=True)
+            logger.error(f"[{user_id}] Ошибка обработки сообщения: {e}", exc_info=True)
             error_messages = {
                 'uz': "Kechirasiz, texnik xatolik yuz berdi. Iltimos, keyinroq qayta urinib ko'ring.",
                 'ru': "Извините, произошла техническая ошибка. Пожалуйста, попробуйте позже.",
                 'en': "Sorry, a technical error occurred. Please try again later."
             }
-            await self._send_message_with_menu(
-                update.effective_chat.id,
-                error_messages.get(language, error_messages['uz']),
-                language
-            )
+            try:
+                await self._send_message_with_menu(
+                    update.effective_chat.id,
+                    error_messages.get(language, error_messages['uz']),
+                    language
+                )
+            except Exception as send_error:
+                logger.error(f"[{user_id}] Не удалось отправить сообщение об ошибке: {send_error}", exc_info=True)
+            
+            elapsed = (datetime.now() - start_time).total_seconds()
+            logger.error(f"[{user_id}] Обработка завершена с ошибкой за {elapsed:.2f}с")
 
     async def handle_callback_query(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Обработка inline кнопок"""
@@ -505,6 +560,8 @@ class AssistantBot:
     def _is_topic_relevant(self, message: str) -> bool:
         """Проверка, относится ли сообщение к теме закупок из Китая"""
         message_lower = message.lower()
+        
+        logger.debug(f"Проверка релевантности сообщения: '{message[:50]}...'")
 
         # Ключевые слова на русском (основная тема)
         ru_keywords = [
@@ -580,16 +637,24 @@ class AssistantBot:
 
         # Проверяем наличие ключевых слов
         all_keywords = ru_keywords + uz_keywords + en_keywords
-
+        
+        found_keywords = []
         for keyword in all_keywords:
             if keyword in message_lower:
-                return True
+                found_keywords.append(keyword)
+        
+        if found_keywords:
+            logger.debug(f"Найдены ключевые слова: {found_keywords[:10]}")  # Log first 10
+            return True
 
         # Дополнительная проверка: если сообщение слишком короткое (менее 3 символов) или содержит только эмодзи/знаки препинания
-        if len(message_lower.strip(' .,!?;:()[]{}«»"\'\\|/@#$%^&*~`+-=<>')) < 3:
+        stripped_len = len(message_lower.strip(' .,!?;:()[]{}«»"\'\\|/@#$%^&*~`+-=<>'))
+        if stripped_len < 3:
+            logger.debug(f"Сообщение слишком короткое после stripping: {stripped_len} символов")
             return False
 
         # Если ни одно ключевое слово не найдено, считаем тему нерелевантной
+        logger.warning(f"⚠️ Тема нерелевантна, нет ключевых слов: '{message[:50]}...'")
         return False
 
     def run(self):
