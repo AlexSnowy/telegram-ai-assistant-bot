@@ -5,6 +5,8 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: python app.py
     plan: free
+    healthCheckPath: /
+    autoDeploy: true
     envVars:
       - key: TELEGRAM_BOT_TOKEN
         fromSecret: telegramBotToken
@@ -18,3 +20,5 @@ services:
         fromSecret: groqApiKey
       - key: OPENAI_API_KEY
         fromSecret: openaiApiKey
+      - key: PYTHON_VERSION
+        value: "3.11"
