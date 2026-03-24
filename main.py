@@ -70,9 +70,11 @@ def telegram_webhook(request):
             import asyncio
 
             async def process_update():
-                # Инициализируем приложение в текущем event loop
-                await bot.ensure_initialized()
+                # Всегда инициализируем приложение в текущем event loop
+                # В serverless среде каждый запрос может быть в новом loop
+                await application.initialize()
                 await application.process_update(update)
+                # Не вызываем shutdown(), так как это может повредить последующим запросам
 
             # Запускаем асинхронную задачу
             loop = asyncio.new_event_loop()
