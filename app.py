@@ -51,6 +51,8 @@ def webhook():
         update = Update.de_json(update_data, bot_instance.get_application().bot)
         
         async def process():
+            # Убедимся, что Application инициализирован
+            await bot_instance.ensure_initialized()
             await bot_instance.get_application().process_update(update)
         
         loop = asyncio.new_event_loop()

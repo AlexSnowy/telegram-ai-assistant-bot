@@ -49,16 +49,16 @@ class AssistantBot:
         # Регистрация обработчиков
         self._register_handlers()
 
-        # Инициализация application (обязательно для webhook режима)
-        try:
-            import asyncio
-            asyncio.run(self.application.initialize())
-            logger.info("Telegram Application инициализирован")
-        except Exception as e:
-            logger.error(f"Ошибка инициализации Application: {e}")
-            raise
+        self._application_initialized = False
 
-        logger.info("Бот инициализирован успешно")
+        logger.info("Бот инициализирован успешно (Application будет инициализирован при первом использовании)")
+
+    async def ensure_initialized(self):
+        """Инициализация Application для webhook режима"""
+        if not self._application_initialized:
+            await self.application.initialize()
+            self._application_initialized = True
+            logger.info("Telegram Application инициализирован")
 
     def _initialize_ai_client(self):
         """Инициализация AI клиента с приоритетом: Groq > Gemini > OpenAI"""
