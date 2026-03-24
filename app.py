@@ -5,6 +5,7 @@ Simple Telegram Bot Web Server for Railway/Render
 import os
 import sys
 import logging
+import threading
 from flask import Flask, request, jsonify
 
 # Настройка логирования в stdout для Railway
@@ -17,6 +18,18 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 bot_instance = None
+bot_event_loop = None
+bot_loop_lock = threading.Lock()
+
+
+def get_bot_event_loop():
+    """Возвращает постоянный event loop для Telegram Application."""
+    global bot_event_loop
+    if bot_event_loop is None or bot_event_loop.is_closed():
+        import asyncio
+        bot_event_loop = asyncio.new_event_loop()
+        logger.info("Created persistent event loop for Telegram webhook processing")
+    return bot_event_loop
 
 @app.route('/', methods=['GET', 'POST'])
 def health():
@@ -45,7 +58,6 @@ def webhook():
                 return jsonify({'error': f'Bot initialization failed: {str(init_error)}'}), 500
         
         from telegram import Update
-        import asyncio
         
         update_data = request.get_json()
         if not update_data:
@@ -60,13 +72,10 @@ def webhook():
             await bot_instance.ensure_initialized()
             await bot_instance.get_application().process_update(update)
         
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        try:
+        loop = get_bot_event_loop()
+        with bot_loop_lock:
             loop.run_until_complete(process())
-            logger.info("Update processed successfully")
-        finally:
-            loop.close()
+        logger.info("Update processed successfully")
         
         return jsonify({'status': 'ok'}), 200
         
