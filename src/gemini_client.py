@@ -130,8 +130,14 @@ class GeminiClient:
             language: str = 'uz'
     ) -> str:
         try:
-            # Формируем полный системный промт с контекстом
-            full_system = f"{system_prompt}\n\nQuyidagi ma'lumotlar asosida javob bering:\n{knowledge_context}"
+            # Формируем полный системный промт с локализованной подсказкой
+            context_headers = {
+                'uz': "Quyidagi ma'lumotlar asosida javob bering:",
+                'ru': "Ответьте, опираясь на следующие данные:",
+                'en': "Answer using the following information:"
+            }
+            header = context_headers.get(language, context_headers['uz'])
+            full_system = f"{system_prompt}\n\n{header}\n{knowledge_context}"
 
             # Создаем чат с конфигурацией
             chat = self.client.chats.create(
