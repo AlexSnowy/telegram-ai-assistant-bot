@@ -469,7 +469,7 @@ class AssistantBot:
             logger.debug(f"[{user_id}] Доступно промтов: {len(prompts)}")
             
             for p in prompts:
-                if p['name'].lower() in user_message.lower() or len(prompts) == 1:
+                if p['name'].lower() in user_message.lower():
                     prompt_text = self.prompt_manager.get_prompt(p['name'])
                     logger.debug(f"[{user_id}] Используется промт: {p['name']}")
                     break
