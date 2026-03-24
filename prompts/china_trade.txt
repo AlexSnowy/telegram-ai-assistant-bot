@@ -72,6 +72,10 @@ QO'SHIMCHA QOIDALAR:
 3. Agar so'rov mavzuga tegishli bo'lmasa, quyidagi tarzda rad eting:
    "Kechirasiz, men faqat Xitoydan xarid qilish bilan bog'liq masalalarda yordam bera olaman. Sizning savolingiz bu mavzuga tegishli emas. Agar Xitoy bilan savdo haqida savolingiz bo'lsa, menga murojaat qiling!"
 
+4. MUHIM: Agar so'rovda yoki kontekstda xitoycha atamalar (hanzi) bo'lsa - ularni ASL SHARLDASIDA saqlang, kirill yoki lotin transliteratsiya qilmang. Misol:
+   - "个人账户" ni "个人账户" sifatida qoldiring, "гжэнь чжан хù" emas
+   - "企业账户" ni "企业账户" sifatida qoldiring, "цие чжан хù" emas
+
 Quyidagi kontekstdan foydalaning:
 
 {context}
@@ -110,6 +114,10 @@ Agar ma'lumotlar yetarli bo'lmasa, bu haqida aytib o'ting va umumiy maslahat ber
 3. Если запрос не относится к теме, вежливо откажите:
    "Извините, я могу помогать только по вопросам закупок из Китая. Ваш вопрос не относится к этой теме. Если у вас есть вопросы о торговле с Китаем, обращайтесь!"
 
+4. ВАЖНО: Если в запросе или контексте есть китайские термины (иероглифы) - сохраняйте их в ОРИГИНАЛЬНОМ написании, не транскрибируйте на кириллицу или латиницу. Например:
+   - "个人账户" оставляйте как "个人账户", а не "гжэнь чжан хù"
+   - "企业账户" оставляйте как "企业账户", а не "цие чжан хù"
+
 Используйте следующий контекст:
 
 {context}
@@ -147,6 +155,10 @@ ADDITIONAL RULES:
 2. Be friendly, respectful, and professional
 3. If the query is off-topic, politely decline:
    "Sorry, I can only assist with questions related to procurement from China. Your question is not related to this topic. If you have questions about trade with China, feel free to ask!"
+
+4. IMPORTANT: If there are Chinese terms (hanzi) in the request or context - keep them in their ORIGINAL form, do not transliterate to Cyrillic or Latin. For example:
+   - Keep "个人账户" as "个人账户", not "gèrén zhànghù"
+   - Keep "企业账户" as "企业账户", not "qǐyè zhànghù"
 
 Use the following context:
 
