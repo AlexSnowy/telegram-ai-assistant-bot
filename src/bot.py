@@ -108,6 +108,7 @@ class AssistantBot:
         self.application.add_handler(CommandHandler("start", self.start_command))
         self.application.add_handler(CommandHandler("help", self.help_command))
         self.application.add_handler(CommandHandler("language", self.language_command))
+        self.application.add_handler(CommandHandler("about", self.about_command))
 
         self.application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_message))
         self.application.add_handler(CallbackQueryHandler(self.handle_callback_query))

@@ -6,6 +6,14 @@ import os
 import sys
 import requests
 
+
+def normalize_webhook_url(url: str) -> str:
+    """Гарантирует, что webhook указывает на endpoint /webhook"""
+    url = url.strip().rstrip('/')
+    if not url.endswith('/webhook'):
+        url = f"{url}/webhook"
+    return url
+
 def set_webhook(bot_token: str, webhook_url: str):
     """Установка webhook для Telegram бота"""
     url = f"https://api.telegram.org/bot{bot_token}/setWebhook"
@@ -64,4 +72,5 @@ if __name__ == "__main__":
         sys.exit(1)
 
     if webhook_url:
+        webhook_url = normalize_webhook_url(webhook_url)
         set_webhook(bot_token, webhook_url)

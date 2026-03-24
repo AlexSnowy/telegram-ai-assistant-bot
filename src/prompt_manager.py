@@ -15,6 +15,8 @@ class PromptManager:
         self.prompts_dir.mkdir(exist_ok=True)
         self.prompts_index_file = self.prompts_dir / 'prompts_index.json'
         self.prompts_index = self._load_index()
+        # Автоматически загружаем промты из директории при инициализации
+        self._ensure_prompts_loaded()
 
     def _load_index(self) -> Dict:
         """Загрузка индекса промтов"""
@@ -26,6 +28,68 @@ class PromptManager:
                 logger.error(f"Ошибка загрузки индекса промтов: {e}")
                 return {'prompts': [], 'metadata': {}}
         return {'prompts': [], 'metadata': {'version': '1.0', 'created': datetime.now().isoformat()}}
+
+    def _ensure_prompts_loaded(self) -> None:
+        """Проверяет и загружает промты из директории, если индекс пуст"""
+        logger.info("=" * 60)
+        logger.info("🔍 Проверка индекса промтов...")
+        
+        # Получаем все txt файлы в директории
+        all_files = list(self.prompts_dir.glob('*.txt'))
+        
+        if not all_files:
+            logger.warning(f"⚠️ В директории {self.prompts_dir} не найдено промтов")
+            return
+        
+        logger.info(f"📁 Найдено {len(all_files)} файлов промтов в {self.prompts_dir}:")
+        for f in all_files:
+            logger.info(f"   - {f.name}")
+        
+        # Если индекс уже содержит промты, проверяем актуальность
+        if self.prompts_index['prompts']:
+            indexed_names = {p['filename'] for p in self.prompts_index['prompts']}
+            current_names = {f.name for f in all_files}
+            if indexed_names == current_names:
+                logger.info(f"✅ Индекс промтов актуален: все {len(all_files)} файлов уже загружены")
+                logger.info("=" * 60)
+                return
+        
+        # Перезагружаем все промты
+        logger.info("🔄 Обновление индекса промтов...")
+        self.prompts_index = {
+            'prompts': [],
+            'metadata': {
+                'version': '1.0',
+                'last_updated': datetime.now().isoformat(),
+                'total_files': len(all_files)
+            }
+        }
+        
+        added_count = 0
+        for file_path in all_files:
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read().strip()
+                
+                if content:
+                    prompt_info = {
+                        'id': len(self.prompts_index['prompts']) + 1,
+                        'name': file_path.stem,
+                        'filename': file_path.name,
+                        'path': str(file_path),
+                        'size': len(content),
+                        'preview': content[:200] + '...' if len(content) > 200 else content,
+                        'added_at': datetime.now().isoformat()
+                    }
+                    self.prompts_index['prompts'].append(prompt_info)
+                    added_count += 1
+                    logger.info(f"   ✅ Загружен: {file_path.name} ({len(content):,} символов)")
+            except Exception as e:
+                logger.error(f"   ❌ Ошибка загрузки {file_path}: {e}")
+        
+        self._save_index()
+        logger.info(f"✅ Индекс промтов обновлен: {added_count}/{len(all_files)} файлов загружено")
+        logger.info("=" * 60)
 
     def _save_index(self):
         """Сохранение индекса промтов"""

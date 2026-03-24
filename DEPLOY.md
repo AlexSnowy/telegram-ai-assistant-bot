@@ -42,7 +42,7 @@
 7. После успешного деплоя скопируйте URL вашего сервиса
 8. Установите webhook для Telegram:
    ```bash
-   curl -X POST "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook?url=<YOUR_RAILWAY_URL>"
+    curl -X POST "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook?url=<YOUR_RAILWAY_URL>/webhook"
    ```
 
 **Примечание:** Railway использует `railway.json` и `Procfile` из репозитория.
@@ -80,7 +80,7 @@
 7. После деплоя скопируйте URL сервиса
 8. Установите webhook:
    ```bash
-   curl -X POST "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook?url=<YOUR_RENDER_URL>"
+    curl -X POST "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook?url=<YOUR_RENDER_URL>/webhook"
    ```
 
 **Примечание:** Render использует `render.yaml` для автоматической настройки.
@@ -124,7 +124,7 @@
 9. Скопируйте URL функции из вывода
 10. Установите webhook:
     ```bash
-    curl -X POST "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook?url=<YOUR_FUNCTION_URL>"
+     curl -X POST "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook?url=<YOUR_FUNCTION_URL>/webhook"
     ```
 
 ---

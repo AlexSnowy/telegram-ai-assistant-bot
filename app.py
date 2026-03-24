@@ -20,6 +20,11 @@ bot_instance = None
 
 @app.route('/', methods=['GET', 'POST'])
 def health():
+    # GET используется для health-check Render.
+    # POST может приходить от Telegram, если webhook ошибочно установлен на корневой URL.
+    if request.method == 'POST':
+        logger.warning("Received POST on '/'. Forwarding to webhook handler.")
+        return webhook()
     return jsonify({'status': 'ok', 'service': 'telegram-bot'}), 200
 
 @app.route('/webhook', methods=['POST'])

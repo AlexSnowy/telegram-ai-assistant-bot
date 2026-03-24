@@ -81,12 +81,12 @@ After successful deployment:
 Open terminal and run:
 
 ```bash
-curl -X POST "https://api.telegram.org/botYOUR_BOT_TOKEN/setWebhook?url=YOUR_RENDER_URL"
+curl -X POST "https://api.telegram.org/botYOUR_BOT_TOKEN/setWebhook?url=YOUR_RENDER_URL/webhook"
 ```
 
 **Example:**
 ```bash
-curl -X POST "https://api.telegram.org/bot8763371380:AAE3iA-rOEWrYzKtAYFB55XiUN5nlGZAoZo/setWebhook?url=https://telegram-ai-assistant.onrender.com"
+curl -X POST "https://api.telegram.org/bot8763371380:AAE3iA-rOEWrYzKtAYFB55XiUN5nlGZAoZo/setWebhook?url=https://telegram-ai-assistant.onrender.com/webhook"
 ```
 
 ### 8. Verify
