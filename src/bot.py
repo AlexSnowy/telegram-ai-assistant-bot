@@ -563,6 +563,21 @@ class AssistantBot:
         
         logger.debug(f"Проверка релевантности сообщения: '{message[:50]}...'")
 
+        # Сначала проверяем базовые вопросы о боте - они всегда релевантны
+        basic_questions_ru = [
+            'кто ты', 'что ты', 'как тебя зовут', 'твоё имя', 'имя',
+            'что умеешь', 'чем можешь помочь', 'как ты можешь помочь',
+            'как купить', 'как заказать', 'как сделать заказ',
+            'помощь', 'help', 'что ты можешь', 'твои возможности',
+            'что ты знаешь', 'какие есть', 'расскажи о себе', 'кто ты',
+            'как работает', 'как пользоваться', 'инструкция'
+        ]
+        
+        for phrase in basic_questions_ru:
+            if phrase in message_lower:
+                logger.info(f"✅ Обнаружен базовый вопрос (релевантен): '{phrase}'")
+                return True
+
         # Ключевые слова на русском (основная тема)
         ru_keywords = [
             'китай', 'китай', 'china', 'chinese',
@@ -588,7 +603,9 @@ class AssistantBot:
             'минимум', 'мооп', 'моп', 'шт', 'штук',
             'цена', 'стоимост', 'расцен', 'тариф',
             'срок', 'врем', 'дата', 'дедлайн',
-            'гарант', 'warranty', 'возврат', 'refund'
+            'гарант', 'warranty', 'возврат', 'refund',
+            'alipay', 'wechat', 'weixin', 'qq', 'регистрац', 'аккаунт',
+            'верификац', 'подтвержден', 'идентификац', 'проверка'
         ]
 
         # Ключевые слова на узбекском
@@ -608,7 +625,8 @@ class AssistantBot:
             'agent', 'broker', 'vositachi',
             'narx', 'bahosi', 'qiymat', 'tarif',
             'muddat', 'vaqt', 'sana', 'chegarasi',
-            'kafolat', 'qaytarish', 'return'
+            'kafolat', 'qaytarish', 'return',
+            'alipay', 'wechat', 'weixin', 'qq', 'royxatdan', 'hisob'
         ]
 
         # Ключевые слова на английском
@@ -632,7 +650,9 @@ class AssistantBot:
             'warranty', 'guarantee', 'refund', 'return',
             'packaging', 'labeling', 'marking',
             'alibaba', 'aliexpress', '1688', 'taobao', 'jd',
-            'made-in-china', 'global sources'
+            'made-in-china', 'global sources',
+            'alipay', 'wechat', 'weixin', 'qq', 'register', 'account',
+            'verification', 'confirm', 'identity', 'check'
         ]
 
         # Проверяем наличие ключевых слов

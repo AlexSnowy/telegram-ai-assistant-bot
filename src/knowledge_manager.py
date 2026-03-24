@@ -19,6 +19,77 @@ class KnowledgeManager:
         self.index_file = self.knowledge_dir / 'index.json'
         self.documents_index = self._load_index()
         self.document_processor = DocumentProcessor()
+        
+        # Автоматически индексируем документы при инициализации
+        self._ensure_index_up_to_date()
+    
+    def _ensure_index_up_to_date(self) -> None:
+        """Проверяет и обновляет индекс, если есть новые или измененные файлы"""
+        logger.info("=" * 60)
+        logger.info("🔍 Проверка индекса базы знаний...")
+        
+        # Получаем все файлы в директории
+        all_files = list(self.knowledge_dir.glob('*.*'))
+        supported_extensions = {'.txt', '.docx', '.xlsx', '.pdf', '.doc'}
+        knowledge_files = [f for f in all_files if f.suffix.lower() in supported_extensions]
+        
+        if not knowledge_files:
+            logger.warning(f"⚠️ В директории {self.knowledge_dir} не найдено поддерживаемых файлов")
+            return
+        
+        logger.info(f"📁 Найдено {len(knowledge_files)} файлов в {self.knowledge_dir}:")
+        for f in knowledge_files:
+            logger.info(f"   - {f.name}")
+        
+        # Проверяем, все ли файлы в индексе
+        indexed_filenames = {doc['filename'] for doc in self.documents_index['documents']}
+        current_filenames = {f.name for f in knowledge_files}
+        
+        # Если индекс пустой или есть новые файлы - переиндексируем все
+        if not self.documents_index['documents'] or not current_filenames.issubset(indexed_filenames):
+            logger.info("🔄 Обновление индекса...")
+            
+            # Очищаем и создаем новый индекс
+            self.documents_index = {
+                'documents': [],
+                'metadata': {
+                    'version': '1.0',
+                    'last_updated': datetime.now().isoformat(),
+                    'total_files': len(knowledge_files)
+                }
+            }
+            
+            # Добавляем все документы
+            added_count = 0
+            for file_path in knowledge_files:
+                try:
+                    content = self.document_processor.process_file(str(file_path))
+                    if content:
+                        doc_info = {
+                            'id': len(self.documents_index['documents']) + 1,
+                            'filename': file_path.name,
+                            'path': str(file_path),
+                            'content': content,
+                            'hash': self._calculate_file_hash(str(file_path)),
+                            'size': len(content),
+                            'added_at': datetime.now().isoformat()
+                        }
+                        self.documents_index['documents'].append(doc_info)
+                        added_count += 1
+                        logger.info(f"   ✅ Добавлен: {file_path.name} ({len(content):,} символов)")
+                except Exception as e:
+                    logger.error(f"   ❌ Ошибка индексации {file_path}: {e}")
+            
+            self._save_index()
+            logger.info(f"✅ Индекс обновлен: {added_count}/{len(knowledge_files)} документов проиндексировано")
+            
+            # Показываем список всех проиндексированных документов
+            for doc in self.documents_index['documents']:
+                logger.debug(f"   [{doc['id']}] {doc['filename']} ({doc['size']:,} символов)")
+        else:
+            logger.info(f"✅ Индекс актуален: все {len(knowledge_files)} файлов уже проиндексированы")
+        
+        logger.info("=" * 60)
 
     def _load_index(self) -> Dict:
         """Загрузка индекса документов"""
@@ -176,28 +247,37 @@ class KnowledgeManager:
 
     def get_context_for_query(self, query: str, max_docs: int = 3, max_chars: int = 4000) -> str:
         """Получение контекста из релевантных документов для запроса"""
+        logger.info(f"🔍 Поиск контекста для запроса: '{query[:50]}...'")
         results = self.search_documents(query, limit=max_docs)
 
         if not results:
+            logger.warning(f"⚠️ Контекст не найден для запроса: '{query[:50]}...'")
             return ""
 
+        logger.info(f"📚 Найдено {len(results)} релевантных документов:")
         context_parts = []
         total_chars = 0
 
-        for result in results:
+        for i, result in enumerate(results, 1):
             doc = result['document']
             content = doc['content']
-
+            score = result['score']
+            
+            logger.info(f"   [{i}] {doc['filename']} (релевантность: {score}, размер: {len(content):,} символов)")
+            
             # Ограничиваем размер контекста
             if total_chars + len(content) > max_chars:
                 # Берем только часть контента
                 remaining = max_chars - total_chars
                 if remaining > 100:  # Минимальный порог
                     content = content[:remaining]
+                    logger.debug(f"      Контент обрезан до {remaining} символов")
                 else:
+                    logger.debug(f"      Пропущен (недостаточно места)")
                     break
 
             context_parts.append(f"=== {doc['filename']} ===\n{content}\n")
             total_chars += len(content)
 
+        logger.info(f"✅ Общий размер контекста: {total_chars:,} символов из {len(results)} документов")
         return '\n'.join(context_parts)
