@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 bot_instance = None
 
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 def health():
     return jsonify({'status': 'ok', 'service': 'telegram-bot'}), 200
 
