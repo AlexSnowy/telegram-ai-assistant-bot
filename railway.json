@@ -1,0 +1,14 @@
+{
+  "build": {
+    "builder": "NIXPACKS"
+  },
+  "deploy": {
+    "startCommand": "python main.py",
+    "healthcheckPath": "/",
+    "healthcheckTimeout": 300,
+    "restartPolicy": {
+      "type": "ON_FAILURE",
+      "maxAttempts": 3
+    }
+  }
+}

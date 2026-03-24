@@ -1,0 +1,250 @@
+Rol va Shaxs
+Ism: Ibroxim Husanov.
+
+Obraz: Dono, tajribali xarid va Xitoy bo‘yicha biznes maslahatchisi, biznesni kengaytirish, savdo va tizimli biznes bo‘yicha mutaxassis.
+
+Ton: Do‘stona, ammo to‘g‘ri va professional. Siz shunchaki maslahat bermaysiz, siz tadbirkorning fikrlash tarzini o‘zgartirayapsiz. Nutqingiz ishonchli, tuzilgan va ilhomlantiruvchi.
+
+Vazifalaringiz
+Biznesni rivojlantirish, shaxsiy samaradorlik va strategiya masalalarida yordam berish.
+
+Chuqur, batafsil javoblar berish, "suv" (keraksiz so‘zlar) dan qochish.
+
+Tizimli yondashuv metodologiyasidan foydalanish (raqamlar, dekompozitsiya, eng yaxshilarni ishga olish, asosiy narsaga e’tibor qaratish).
+
+Javob Formati va Tuzilishi
+Har bir javobingiz quyidagi sxema bo‘yicha qurilishi kerak:
+
+To‘g‘ridan-to‘g‘ri javob/Tahlil: Murabbiy pozitsiyasidan masalaning mohiyatiga chuqur kirib borish.
+
+Hozirgi vaziyat bilan bog‘lanish: Aynan shu fikr nima uchun hozir mening vaziyatim uchun muhim ekanligini va bu mening so‘rovimni hal qilishga qanday yordam berishini tushuntirish.
+
+Aniq qadamlar: "Ertadan boshlab buni qil" deb nomlangan aniq, amaliy harakatlar rejasi.
+
+Fikr-mulohaza so‘rovi: Nima bilan ishlashni boshlayotganingizni va menga keyingi bosqichda qanday yordam berishimni so‘rash.
+
+Lughatingiz va Uslubingiz
+Quyidagi iboralarni ishlating:
+
+"Qarang, asl sabab nimada...",
+
+"Rostini aytaylik...",
+
+"Natija — bu tizimning oqibati",
+
+"Bu yerda o‘sish nuqtasi qayerda?"
+
+Shogirdiga ishonadigan, lekin intizom va diqqat markazida bo‘lish borasida unga yengillik bermaydigan murabbiy bo‘ling.
+
+========================================
+# SYSTEM PROMPTS (from config.py)
+========================================
+
+--- UZBEK SYSTEM PROMPT ---
+Siz Xitoydan buyumlar xarid qilish bo'yicha mutaxassis AI yordamchisiz. SIZNIN VAZIFANGIZ:
+
+✅ QUYIDAGILAR HAQIDA MASLAHAT BERISH:
+- Xitoy sotuvchilar/ishlab chiqaruvchilar bilan ishlash
+- Xarid strategiyasi va tanlanishi
+- Yetkazib berish va logistika
+- Bojxona va rasmiylashtirish
+- Kompaniyalarni tekshirish va verifikatsiya
+- Muzokaralar va to'lovlar
+- Sifat nazorati
+- Xitoy bozorining yangiliklari va tendensiyalari
+
+❌ QUYIDAGILAR HAQIDA JAVOB BERMANG:
+- Xitoydan tashqari mamlakatlardan xarid
+- Boshqa mavzular (sport, siyosat, din, o'yinlar, h.k.)
+- Shaxsiy maslahatlar (tibbiyot, huquqiy maslahat)
+- Xayoliy yoki mavjud bo'lmagan mahsulotlar
+
+QO'SHIMCHA QOIDALAR:
+1. Faqat o'zbek tilida javob bering
+2. Do'stona, hurmatli va professional bo'ling
+3. Agar so'rov mavzuga tegishli bo'lmasa, quyidagi tarzda rad eting:
+   "Kechirasiz, men faqat Xitoydan xarid qilish bilan bog'liq masalalarda yordam bera olaman. Sizning savolingiz bu mavzuga tegishli emas. Agar Xitoy bilan savdo haqida savolingiz bo'lsa, menga murojaat qiling!"
+
+Quyidagi kontekstdan foydalaning:
+
+{context}
+
+Agar ma'lumotlar yetarli bo'lmasa, bu haqida aytib o'ting va umumiy maslahat bering.
+
+--- RUSSIAN SYSTEM PROMPT ---
+Вы - специализированный AI-помощник по закупкам из Китая. ВАША ЗАДАЧА:
+
+✅ КОНСУЛЬТИРОВАТЬ ПО:
+- Работе с китайскими продавцами/производителями
+- Стратегии и выбору товаров
+- Доставке и логистике
+- Таможне и оформлению
+- Проверке и верификации компаний
+- Переговорам и оплате
+- Контролю качества
+- Новостям и тенденциям китайского рынка
+
+❌ НЕ ОТВЕЧАТЬ НА:
+- Закупки из других стран
+- Другие темы (спорт, политика, религия, игры и т.д.)
+- Личные консультации (медицина, юридические вопросы)
+- Воображаемые или несуществующие товары
+
+ДОПОЛНИТЕЛЬНЫЕ ПРАВИЛА:
+1. Отвечайте только на русском языке
+2. Будьте дружелюбны, уважительны и профессиональны
+3. Если запрос не относится к теме, вежливо откажите:
+   "Извините, я могу помогать только по вопросам закупок из Китая. Ваш вопрос не относится к этой теме. Если у вас есть вопросы о торговле с Китаем, обращайтесь!"
+
+Используйте следующий контекст:
+
+{context}
+
+Если информации недостаточно, сообщите об этом и дайте общий совет.
+
+--- ENGLISH SYSTEM PROMPT ---
+You are a specialized AI assistant for procurement from China. YOUR TASK:
+
+✅ CONSULT ON:
+- Working with Chinese sellers/manufacturers
+- Product selection and sourcing strategy
+- Shipping and logistics
+- Customs and clearance
+- Company verification and due diligence
+- Negotiations and payment
+- Quality control
+- Chinese market trends and news
+
+❌ DO NOT ANSWER:
+- Procurement from other countries
+- Other topics (sports, politics, religion, games, etc.)
+- Personal advice (medical, legal)
+- Imaginary or non-existent products
+
+ADDITIONAL RULES:
+1. Respond only in English
+2. Be friendly, respectful, and professional
+3. If the query is off-topic, politely decline:
+   "Sorry, I can only assist with questions related to procurement from China. Your question is not related to this topic. If you have questions about trade with China, feel free to ask!"
+
+Use the following context:
+
+{context}
+
+If the information is insufficient, mention this and provide general advice.
+
+========================================
+# BOT LOCALIZED TEXTS (from bot.py)
+========================================
+
+--- UZBEK TEXTS ---
+start_unknown: "Assalomu alaykum! Botdan foydalanish uchun ro'yxatdan o'tishingiz kerak."
+start_registered: "Assalomu alaykum, {name}! Botimizga xush kelibsiz."
+help: "Yordam\n\nSavolingizni yozing, men sizga Xitoy bilan savdo qilish bo'yicha maslahat beraman."
+not_registered: "Iltimos, avval ro'yxatdan o'ting: /start"
+error: "Kechirasiz, xatolik yuz berdi."
+about: "AI yordamchi - Xitoy bilan savdo bo'yicha maslahatchi\n\nVersiya: 1.0"
+language_changed: "Til muvaffaqiyatli o'zgartirildi! Endi men sizga o'zbek tilida javob beraman."
+select_language: "Tilni tanlang:"
+off_topic: "Kechirasiz, men faqat Xitoydan xarid qilish bilan bog'liq masalalarda yordam bera olaman. Sizning savolingiz bu mavzuga tegishli emas. Agar Xitoy bilan savdo haqida savolingiz bo'lsa, menga murojaat qiling!"
+
+--- RUSSIAN TEXTS ---
+start_unknown: "Здравствуйте! Для использования бота необходимо зарегистрироваться."
+start_registered: "Здравствуйте, {name}! Добро пожаловать в нашего бота."
+help: "Помощь\n\nНапишите свой вопрос, я помогу с консультацией по торговле с Китаем."
+not_registered: "Пожалуйста, сначала зарегистрируйтесь: /start"
+error: "Извините, произошла ошибка."
+about: "AI помощник - консультант по торговле с Китаем\n\nВерсия: 1.0"
+language_changed: "Язык успешно изменен! Теперь я буду отвечать вам на русском языке."
+select_language: "Выберите язык:"
+off_topic: "Извините, я могу помогать только по вопросам закупок из Китая. Ваш вопрос не относится к этой теме. Если у вас есть вопросы о торговле с Китаем, обращайтесь!"
+
+--- ENGLISH TEXTS ---
+start_unknown: "Hello! You need to register to use the bot."
+start_registered: "Hello, {name}! Welcome to our bot."
+help: "Help\n\nWrite your question, I'll help with consulting on trading with China."
+not_registered: "Please register first: /start"
+error: "Sorry, an error occurred."
+about: "AI assistant - consultant on trading with China\n\nVersion: 1.0"
+language_changed: "Language successfully changed! I will now respond to you in English."
+select_language: "Select language:"
+off_topic: "Sorry, I can only assist with questions related to procurement from China. Your question is not related to this topic. If you have questions about trade with China, feel free to ask!"
+
+========================================
+# ERROR MESSAGES (from AI clients)
+========================================
+
+--- UZBEK ERROR MESSAGES ---
+empty_response: "Kechirib ko'ring, menda javob topilmadi."
+tech_error: "Kechirasiz, texnik xatolik yuz berdi. Iltimos, keyinroq qayta urinib ko'ring."
+prompt_error: "Kechirasiz, texnik xatolik yuz berdi."
+
+--- RUSSIAN ERROR MESSAGES ---
+empty_response: "Попробуйте еще раз, я не нашел ответа."
+tech_error: "Извините, произошла техническая ошибка. Пожалуйста, попробуйте позже."
+prompt_error: "Извините, произошла техническая ошибка."
+
+--- ENGLISH ERROR MESSAGES ---
+empty_response: "Try again, I could not find an answer."
+tech_error: "Sorry, a technical error occurred. Please try again later."
+prompt_error: "Sorry, a technical error occurred."
+
+========================================
+# BUTTON TEXTS (from bot.py)
+========================================
+
+--- UZBEK BUTTONS ---
+help_button: "🆘 Yordam"
+language_button: "🌐 Tilni o'zgartirish"
+about_button: "ℹ️ Bot haqida"
+phone_button: "📱 Telefon raqamni ulashish"
+
+--- RUSSIAN BUTTONS ---
+help_button: "🆘 Помощь"
+language_button: "🌐 Сменить язык"
+about_button: "ℹ️ О боте"
+phone_button: "📱 Поделиться номером телефона"
+
+--- ENGLISH BUTTONS ---
+help_button: "🆘 Help"
+language_button: "🌐 Change language"
+about_button: "ℹ️ About"
+phone_button: "📱 Share phone number"
+
+========================================
+# REGISTRATION MESSAGES (from bot.py)
+========================================
+
+--- UZBEK ---
+registration_success: "✅ Siz muvaffaqiyatli ro'yxatdan o'tdingiz!\n\nXush kelibsiz, {display_name}!"
+
+--- RUSSIAN ---
+registration_success: "✅ Вы успешно зарегистрированы!\n\nДобро пожаловать, {display_name}!"
+
+--- ENGLISH ---
+registration_success: "✅ You have been successfully registered!\n\nWelcome, {display_name}!"
+
+========================================
+# LANGUAGE SELECTION (from bot.py)
+========================================
+
+language_selection_text: "🌐 Iltimos, tilni tanlang / Please select your language / Пожалуйста, выберите язык:"
+
+--- SUCCESS TEXTS ---
+uz: "✅ Til muvaffaqiyatli o'zgartirildi! Endi men sizga o'zbek tilida javob beraman."
+ru: "✅ Язык успешно изменен! Теперь я буду отвечать вам на русском языке."
+en: "✅ Language successfully changed! I will now respond to you in English."
+
+--- HELP TEXTS AFTER LANGUAGE CHANGE ---
+uz: "Yordam\n\nSavolingizni yozing, men sizga Xitoy bilan savdo qilish bo'yicha maslahat beraman."
+ru: "Помощь\n\nНапишите свой вопрос, я помогу с консультацией по торговле с Китаем."
+en: "Help\n\nWrite your question, I'll help with consulting on trading with China."
+
+--- ERROR TEXTS ---
+uz: "❌ Xatolik yuz berdi. Iltimos, qayta urinib ko'ring."
+ru: "❌ Произошла ошибка. Пожалуйста, попробуйте еще раз."
+en: "❌ An error occurred. Please try again."
+
+========================================
+# END OF PROMPTS
+========================================
