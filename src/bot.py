@@ -15,9 +15,7 @@ from telegram.ext import (
 )
 
 from config import Config
-from .gemini_client import GeminiClient
-from .groq_client import GroqClient
-from .openai_client import OpenAIClient
+# Импорты AI клиентов будут выполняться лениво при необходимости
 from .knowledge_manager import KnowledgeManager
 from .prompt_manager import PromptManager
 from .user_manager import UserManager
@@ -59,6 +57,7 @@ class AssistantBot:
         if Config.GROQ_API_KEY and Config.GROQ_API_KEY != 'gsk_your_key_here':
             try:
                 logger.info("Попытка инициализации Groq клиента...")
+                from .groq_client import GroqClient
                 client = GroqClient(Config.GROQ_API_KEY)
                 logger.info(f"✓ Используется Groq с моделью: {Config.GROQ_MODEL}")
                 return client
@@ -69,6 +68,7 @@ class AssistantBot:
         if Config.GOOGLE_API_KEY:
             try:
                 logger.info("Попытка инициализации Gemini клиента...")
+                from .gemini_client import GeminiClient
                 client = GeminiClient(Config.GOOGLE_API_KEY)
                 logger.info(f"✓ Используется Gemini с моделью: {Config.GEMINI_MODEL}")
                 return client
@@ -79,6 +79,7 @@ class AssistantBot:
         if Config.OPENAI_API_KEY:
             try:
                 logger.info("Попытка инициализации OpenAI клиента...")
+                from .openai_client import OpenAIClient
                 client = OpenAIClient(Config.OPENAI_API_KEY)
                 logger.info(f"✓ Используется OpenAI с моделью: {Config.OPENAI_MODEL}")
                 return client
