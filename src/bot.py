@@ -442,16 +442,13 @@ class AssistantBot:
         logger.debug(f"[{user_id}] Результат проверки релевантности: {is_relevant}")
         
         if not is_relevant:
-            logger.info(f"[{user_id}] Тема нерелевантна, отправка сообщения о выходе за тему")
-            off_topic_messages = {
-                'uz': "Kechirasiz, men faqat Xitoydan xarid qilish bilan bog'liq masalalarda yordam bera olaman. Sizning savolingiz bu mavzuga tegishli emas. Agar Xitoy bilan savdo haqida savolingiz bo'lsa, menga murojaat qiling!",
-                'ru': "Извините, я могу помогать только по вопросам закупок из Китая. Ваш вопрос не относится к этой теме. Если у вас есть вопросы о торговле с Китаем, обращайтесь!",
-                'en': "Sorry, I can only assist with questions related to procurement from China. Your question is not related to this topic. If you have questions about trade with China, feel free to ask!"
-            }
-            await update.message.reply_text(off_topic_messages.get(language, off_topic_messages['uz']))
-            elapsed = (datetime.now() - start_time).total_seconds()
-            logger.info(f"[{user_id}] Обработка завершена (нерелевантная тема) за {elapsed:.2f}с")
-            return
+            # Вместо отказа - ПЫТАЕМСЯ связать с Китаем через AI
+            # AI сам решит, можно ли ответить или нужно отказать
+            logger.info(f"[{user_id}] Тема не сразу релевантна, но попробуем через AI с контекстом Китая")
+            # Добавляем к сообщению контекст о Китае
+            enhanced_message = f"{user_message}\n\n[Контекст: Пользователь спрашивает о чём-то, что может быть связано с Китаем, товарами, закупками, торговлей. Если вопрос не имеет отношения к Китаю, вежливо откажите, объяснив, что бот специализируется только на закупках из Китая.]"
+            user_message = enhanced_message
+            logger.debug(f"[{user_id}] Улучшенное сообщение: {user_message[:100]}...")
 
         # Показываем статус "печатает"
         logger.debug(f"[{user_id}] Отправка статуса 'печатает'...")
