@@ -1,4 +1,3 @@
-import os
 import json
 import hashlib
 from pathlib import Path
@@ -31,7 +30,10 @@ class KnowledgeManager:
         # Получаем все файлы в директории
         all_files = list(self.knowledge_dir.glob('*.*'))
         supported_extensions = {'.txt', '.docx', '.xlsx', '.pdf', '.doc'}
-        knowledge_files = [f for f in all_files if f.suffix.lower() in supported_extensions]
+        knowledge_files = sorted(
+            [f for f in all_files if f.suffix.lower() in supported_extensions],
+            key=lambda p: p.name.lower()
+        )
         
         if not knowledge_files:
             logger.warning(f"⚠️ В директории {self.knowledge_dir} не найдено поддерживаемых файлов")
@@ -41,13 +43,38 @@ class KnowledgeManager:
         for f in knowledge_files:
             logger.info(f"   - {f.name}")
         
-        # Проверяем, все ли файлы в индексе
+        # Проверяем, все ли файлы в индексе и не изменились ли их хэши
         indexed_filenames = {doc['filename'] for doc in self.documents_index['documents']}
+        indexed_hashes = {
+            doc['filename']: doc.get('hash', '')
+            for doc in self.documents_index['documents']
+        }
         current_filenames = {f.name for f in knowledge_files}
+        current_hashes = {
+            f.name: self._calculate_file_hash(str(f))
+            for f in knowledge_files
+        }
+
+        new_files = current_filenames - indexed_filenames
+        removed_files = indexed_filenames - current_filenames
+        changed_files = {
+            filename
+            for filename, file_hash in current_hashes.items()
+            if indexed_hashes.get(filename) != file_hash
+        }
         
-        # Если индекс пустой или есть новые файлы - переиндексируем все
-        if not self.documents_index['documents'] or not current_filenames.issubset(indexed_filenames):
+        # Если индекс пустой, есть новые/удаленные/измененные файлы — переиндексируем
+        if (not self.documents_index['documents']
+                or new_files
+                or removed_files
+                or changed_files):
             logger.info("🔄 Обновление индекса...")
+            if new_files:
+                logger.info(f"   ➕ Новые файлы: {', '.join(sorted(new_files))}")
+            if removed_files:
+                logger.info(f"   ➖ Удаленные файлы: {', '.join(sorted(removed_files))}")
+            if changed_files:
+                logger.info(f"   ♻️ Измененные файлы: {', '.join(sorted(changed_files))}")
             
             # Очищаем и создаем новый индекс
             self.documents_index = {
@@ -82,10 +109,6 @@ class KnowledgeManager:
             
             self._save_index()
             logger.info(f"✅ Индекс обновлен: {added_count}/{len(knowledge_files)} документов проиндексировано")
-            
-            # Показываем список всех проиндексированных документов
-            for doc in self.documents_index['documents']:
-                logger.debug(f"   [{doc['id']}] {doc['filename']} ({doc['size']:,} символов)")
         else:
             logger.info(f"✅ Индекс актуален: все {len(knowledge_files)} файлов уже проиндексированы")
         
@@ -188,23 +211,53 @@ class KnowledgeManager:
     def search_documents(self, query: str, limit: int = 5) -> List[Dict]:
         """Поиск релевантных документов по запросу"""
         query_lower = query.lower()
+        query_words = [word.strip(".,!?;:()[]{}\"'") for word in query_lower.split()]
+        query_words = [word for word in query_words if word]
+
+        address_keywords = {
+            'адрес', 'адреса', 'рынок', 'рынка', 'рынков', 'market', 'markets', 'location',
+            'локация', 'где', 'находится', 'guangzhou', 'yiwu', 'гуанчжоу', 'иву'
+        }
+        is_address_query = any(word in address_keywords for word in query_words)
+
         results = []
 
         for doc in self.documents_index['documents']:
             content = doc['content']
+            filename = doc.get('filename', '')
+            filename_lower = filename.lower()
             # Простой поиск по ключевым словам
             score = 0
-            query_words = query_lower.split()
 
             for word in query_words:
-                if word in content.lower():
-                    score += content.lower().count(word)
+                if len(word) > 2:  # Игнорируем очень короткие слова
+                    count = content.lower().count(word)
+                    if count > 0:
+                        score += count * (len(word) / 3)  # Вес зависит от длины слова
+                    # Дополнительный вес за попадание в название файла
+                    if word in filename_lower:
+                        score += 12
+
+            # Усиливаем выбор документов с адресами рынков для адресных запросов
+            if is_address_query and ('адрес' in filename_lower or 'рынк' in filename_lower):
+                score += 120
+
+            # Дополнительный буст для городов, чтобы быстрее находить нужный файл
+            if 'guangzhou' in query_lower or 'гуанчжоу' in query_lower:
+                if 'guangzhou' in filename_lower or 'гуанчжоу' in filename_lower:
+                    score += 80
+
+            if 'yiwu' in query_lower or 'иву' in query_lower:
+                if 'yiwu' in filename_lower or 'иву' in filename_lower:
+                    score += 80
 
             if score > 0:
+                # Получаем превью (первые 500 символов)
+                preview = content[:500] + '...' if len(content) > 500 else content
                 results.append({
                     'document': doc,
                     'score': score,
-                    'preview': content[:500] + '...' if len(content) > 500 else content
+                    'preview': preview
                 })
 
         # Сортируем по релевантности
@@ -263,20 +316,20 @@ class KnowledgeManager:
             content = doc['content']
             score = result['score']
             
-            logger.info(f"   [{i}] {doc['filename']} (релевантность: {score}, размер: {len(content):,} символов)")
+            logger.info(f"   [{i}] {doc['filename']} (релевантность: {score:.0f}, размер: {len(content):,} символов)")
             
             # Ограничиваем размер контекста
             if total_chars + len(content) > max_chars:
                 # Берем только часть контента
                 remaining = max_chars - total_chars
-                if remaining > 100:  # Минимальный порог
+                if remaining > 200:  # Минимальный порог
                     content = content[:remaining]
                     logger.debug(f"      Контент обрезан до {remaining} символов")
                 else:
                     logger.debug(f"      Пропущен (недостаточно места)")
                     break
 
-            context_parts.append(f"=== {doc['filename']} ===\n{content}\n")
+            context_parts.append(f"📄 {doc['filename']}:\n{content}\n")
             total_chars += len(content)
 
         logger.info(f"✅ Общий размер контекста: {total_chars:,} символов из {len(results)} документов")
