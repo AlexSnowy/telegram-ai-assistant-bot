@@ -345,7 +345,9 @@ class KnowledgeManager:
         if not content:
             return ""
 
+        query_lower = query.lower()
         query_words = [w.lower() for w in re.findall(r"\w+", query, flags=re.UNICODE) if len(w) > 2]
+        wants_chinese = any(key in query_lower for key in ('китайск', 'на китай', '中文', 'chinese', 'иероглиф'))
         lines = [line.strip() for line in content.splitlines() if line.strip()]
 
         if not lines:
@@ -357,6 +359,13 @@ class KnowledgeManager:
             line_lower = line.lower()
             if any(word in line_lower for word in query_words):
                 matched_lines.append(line)
+
+        # 1.1) Если запрос просит китайский вариант — приоритетно добираем китайские строки
+        if wants_chinese:
+            chinese_markers = ('中文', '地址', '中国', '广州市', '义乌', '号')
+            for line in lines:
+                if line not in matched_lines and any(marker in line for marker in chinese_markers):
+                    matched_lines.append(line)
 
         # 2) Если совпадений нет, используем начало документа
         if not matched_lines:
