@@ -130,35 +130,45 @@ class GeminiClient:
             language: str = 'uz'
     ) -> str:
         try:
-            # Формируем полный системный промт с локализованной подсказкой
+            # Компактная сборка промта (важно для лимитов бесплатного Gemini)
             context_headers = {
                 'uz': "Quyidagi ma'lumotlar asosida javob bering:",
                 'ru': "Ответьте, опираясь на следующие данные:",
                 'en': "Answer using the following information:"
             }
             header = context_headers.get(language, context_headers['uz'])
-            full_system = f"{system_prompt}\n\n{header}\n{knowledge_context}"
 
-            # Создаем чат с конфигурацией
-            chat = self.client.chats.create(
-                model=self.model_name,
-                config=self.generation_config
+            compact_history = []
+            if chat_history:
+                for msg in chat_history[-4:]:
+                    role = 'User' if msg.get('role') == 'user' else 'Assistant'
+                    content = (msg.get('content') or '').strip()
+                    if len(content) > 450:
+                        content = content[:450] + '...'
+                    compact_history.append(f"{role}: {content}")
+
+            compact_knowledge = (knowledge_context or '').strip()
+            if len(compact_knowledge) > 2200:
+                compact_knowledge = compact_knowledge[:2200] + "\n..."
+
+            compact_system = (system_prompt or '').replace('{context}', '').strip()
+            compact_user = user_message.strip()
+
+            parts = [compact_system, f"{header}\n{compact_knowledge}"]
+            if compact_history:
+                parts.append("History:\n" + "\n".join(compact_history))
+            parts.append(f"User question:\n{compact_user}")
+            parts.append(
+                "Ответь точно по контексту. Если данных нет, честно скажи это и дай безопасные следующие шаги."
             )
 
-            # Отправляем системный промт как первое сообщение (role user)
-            chat.send_message(full_system)
+            full_prompt = "\n\n".join([p for p in parts if p])
 
-            # Если есть история, добавляем её
-            if chat_history:
-                for msg in chat_history[-5:]:
-                    role = msg.get('role', 'user')
-                    content = msg.get('content', '')
-                    if role == 'user':
-                        chat.send_message(content)
-                    # Сообщения ассистента не нужно добавлять, так как они уже в ответах
-
-            # Отправляем текущее сообщение
-            response = chat.send_message(user_message)
+            response = self.client.models.generate_content(
+                model=self.model_name,
+                contents=full_prompt,
+                config=self.generation_config
+            )
 
             if response.text:
                 return response.text.strip()

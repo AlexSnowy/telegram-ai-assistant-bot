@@ -183,6 +183,51 @@ class AssistantBot:
             default = key
         return texts.get(lang, texts['uz']).get(key, default)
 
+    @staticmethod
+    def _build_compact_system_prompt(language: str) -> str:
+        """Компактный системный промт (экономия токенов без потери ключевых правил)."""
+        prompts = {
+            'uz': (
+                "Siz Xitoydan xarid bo'yicha ekspert yordamchisiz. "
+                "Faqat Xitoy savdosi (1688/Taobao/Alibaba/Pinduoduo, logistika, muzokara, tekshiruv, xavfsizlik) mavzusida javob bering. "
+                "Nomaqbul mavzuni muloyim rad eting. "
+                "Javobni qisqa va amaliy qiling: 1) aniq javob, 2) foydasi, 3) qadamlar. "
+                "Ma'lumot yetmasa, ochiq ayting va taxmin qilmang."
+            ),
+            'ru': (
+                "Вы экспертный ассистент по закупкам в Китае. "
+                "Отвечайте только по теме Китая (1688/Taobao/Alibaba/Pinduoduo, логистика, переговоры, проверка поставщиков, безопасность). "
+                "Вне темы — вежливый отказ. "
+                "Формат ответа: 1) суть, 2) почему важно, 3) конкретные шаги. "
+                "Если данных не хватает — честно скажите, не придумывайте."
+            ),
+            'en': (
+                "You are an expert assistant for sourcing from China. "
+                "Answer only on China trade topics (1688/Taobao/Alibaba/Pinduoduo, logistics, negotiations, supplier checks, safety). "
+                "Politely decline off-topic requests. "
+                "Response format: 1) direct answer, 2) why it matters, 3) actionable steps. "
+                "If data is insufficient, say it clearly and do not hallucinate."
+            )
+        }
+        return prompts.get(language, prompts['uz'])
+
+    @staticmethod
+    def _compress_history(history: List[Dict], max_messages: int = 4, max_chars_per_message: int = 500) -> List[Dict]:
+        """Сжимает историю диалога для экономии токенов."""
+        if not history:
+            return []
+
+        compressed = []
+        for msg in history[-max_messages:]:
+            content = (msg.get('content') or '').strip()
+            if len(content) > max_chars_per_message:
+                content = content[:max_chars_per_message] + '...'
+            compressed.append({
+                'role': msg.get('role', 'user'),
+                'content': content
+            })
+        return compressed
+
     async def _send_message_with_menu(self, chat_id: int, text: str, language: str,
                                       reply_markup: ReplyKeyboardMarkup = None):
         """Отправка сообщения с клавиатурой меню"""
@@ -459,7 +504,11 @@ class AssistantBot:
             logger.info(f"[{user_id}] Начало генерации ответа AI...")
             
             # Получаем контекст из базы знаний
-            knowledge_context = self.knowledge_manager.get_context_for_query(user_message)
+            knowledge_context = self.knowledge_manager.get_context_for_query(
+                user_message,
+                max_docs=3,
+                max_chars=2200
+            )
             knowledge_len = len(knowledge_context) if knowledge_context else 0
             logger.debug(f"[{user_id}] Получен контекст из базы знаний ({knowledge_len} символов)")
 
@@ -474,13 +523,14 @@ class AssistantBot:
                     logger.debug(f"[{user_id}] Используется промт: {p['name']}")
                     break
 
-            # Формируем системный промт
-            system_prompt = Config.SYSTEM_PROMPTS.get(language, Config.SYSTEM_PROMPTS['uz'])
+            # Формируем компактный системный промт (важно для лимитов Gemini Free)
+            system_prompt = self._build_compact_system_prompt(language)
             system_prompt_len = len(system_prompt) if system_prompt else 0
             logger.debug(f"[{user_id}] Системный промт загружен ({system_prompt_len} символов)")
 
             # Получаем историю
             history = context.user_data.get('chat_history', [])
+            compressed_history = self._compress_history(history)
             history_len = len(history) if history else 0
             logger.debug(f"[{user_id}] История чата: {history_len} сообщений")
 
@@ -500,7 +550,7 @@ class AssistantBot:
                     user_message,
                     system_prompt,
                     knowledge_context,
-                    history[-5:] if history else None,
+                    compressed_history if compressed_history else None,
                     language
                 )
             

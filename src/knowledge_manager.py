@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import List, Dict, Optional
 from datetime import datetime
 import logging
+import re
 
 from .document_processor import DocumentProcessor
 
@@ -298,7 +299,7 @@ class KnowledgeManager:
         logger.info("База знаний очищена")
         return True
 
-    def get_context_for_query(self, query: str, max_docs: int = 3, max_chars: int = 4000) -> str:
+    def get_context_for_query(self, query: str, max_docs: int = 3, max_chars: int = 2600) -> str:
         """Получение контекста из релевантных документов для запроса"""
         logger.info(f"🔍 Поиск контекста для запроса: '{query[:50]}...'")
         results = self.search_documents(query, limit=max_docs)
@@ -313,10 +314,14 @@ class KnowledgeManager:
 
         for i, result in enumerate(results, 1):
             doc = result['document']
-            content = doc['content']
+            source_content = doc['content']
+            content = self._extract_relevant_snippet(source_content, query)
             score = result['score']
             
-            logger.info(f"   [{i}] {doc['filename']} (релевантность: {score:.0f}, размер: {len(content):,} символов)")
+            logger.info(
+                f"   [{i}] {doc['filename']} (релевантность: {score:.0f}, "
+                f"фрагмент: {len(content):,} из {len(source_content):,} символов)"
+            )
             
             # Ограничиваем размер контекста
             if total_chars + len(content) > max_chars:
@@ -329,8 +334,43 @@ class KnowledgeManager:
                     logger.debug(f"      Пропущен (недостаточно места)")
                     break
 
-            context_parts.append(f"📄 {doc['filename']}:\n{content}\n")
+            context_parts.append(f"Источник: {doc['filename']}\n{content}\n")
             total_chars += len(content)
 
         logger.info(f"✅ Общий размер контекста: {total_chars:,} символов из {len(results)} документов")
         return '\n'.join(context_parts)
+    @staticmethod
+    def _extract_relevant_snippet(content: str, query: str, max_snippet_chars: int = 900) -> str:
+        """Извлекает наиболее релевантные фрагменты текста под запрос."""
+        if not content:
+            return ""
+
+        query_words = [w.lower() for w in re.findall(r"\w+", query, flags=re.UNICODE) if len(w) > 2]
+        lines = [line.strip() for line in content.splitlines() if line.strip()]
+
+        if not lines:
+            return content[:max_snippet_chars]
+
+        # 1) Сначала выбираем строки, где есть ключевые слова запроса
+        matched_lines = []
+        for line in lines:
+            line_lower = line.lower()
+            if any(word in line_lower for word in query_words):
+                matched_lines.append(line)
+
+        # 2) Если совпадений нет, используем начало документа
+        if not matched_lines:
+            return content[:max_snippet_chars]
+
+        # 3) Склеиваем найденные строки в компактный контекст
+        snippet_parts = []
+        total = 0
+        for line in matched_lines:
+            line_len = len(line)
+            if total + line_len + 1 > max_snippet_chars:
+                break
+            snippet_parts.append(line)
+            total += line_len + 1
+
+        snippet = "\n".join(snippet_parts).strip()
+        return snippet if snippet else content[:max_snippet_chars]
